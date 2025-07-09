@@ -1,0 +1,98 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Applicant Profile - PathInsight</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f5f7f6;
+      margin: 0;
+      padding: 30px;
+    }
+
+    .profile-container {
+      max-width: 800px;
+      margin: auto;
+      background-color: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .profile-pic {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid #ccc;
+    }
+
+    h2 {
+      margin: 0;
+      color: #2e4f4f;
+    }
+
+    .info p {
+      margin: 8px 0;
+      line-height: 1.6;
+    }
+
+    .info strong {
+      color: #376e6f;
+    }
+
+    a {
+      color: #4c7a74;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+<div class="profile-container">
+  <div class="profile-header">
+    {% if applicant.profile_picture %}
+      <img src="{{ applicant.profile_picture.url }}" alt="Profile Picture" class="profile-pic">
+    {% else %}
+      <img src="{% static 'users/images/default_profile.png' %}" alt="Default Picture" class="profile-pic">
+    {% endif %}
+    <div>
+      <h2>{{ applicant.user.get_full_name|default:applicant.user.username }}</h2>
+      <p><strong>Email:</strong> {{ applicant.user.email }}</p>
+      <p><strong>Phone:</strong> {{ applicant.phone }}</p>
+    </div>
+  </div>
+
+  <div class="info">
+    <p><strong>LinkedIn:</strong> 
+      {% if applicant.linkedin %}
+        <a href="{{ applicant.linkedin }}" target="_blank">{{ applicant.linkedin }}</a>
+      {% else %}
+        Not provided
+      {% endif %}
+    </p>
+    <p><strong>Education:</strong> {{ cv.education|default:"Not available" }}</p>
+    <p><strong>Skills:</strong> {{ cv.skills|default:"Not available" }}</p>
+    <p><strong>Languages:</strong> {{ cv.languages|default:"Not available" }}</p>
+    <p><strong>Experience:</strong> {{ cv.work_experience|default:"Not available" }}</p>
+    <p><strong>Certifications:</strong> {{ cv.certifications|default:"Not available" }}</p>
+  </div>
+</div>
+
+</body>
+</html>
+
+

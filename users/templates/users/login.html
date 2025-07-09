@@ -1,0 +1,103 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - PathInsight</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      background-color: #f4f6f8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .login-container {
+      background-color: #ffffff;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .login-container img {
+      width: 100px;
+      margin-bottom: 20px;
+    }
+
+    .login-container h2 {
+      color: #2f3e46;
+      margin-bottom: 25px;
+    }
+
+    .login-container input[type="text"],
+    .login-container input[type="password"] {
+      width: 100%;
+      padding: 12px 20px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+      font-size: 14px;
+    }
+
+    .login-container button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 20px;
+      background-color: #7da99d;
+      border: none;
+      color: white;
+      font-weight: bold;
+      border-radius: 8px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .login-container button:hover {
+      background-color: #4c7a74;
+    }
+
+    .register-links {
+      margin-top: 20px;
+    }
+
+    .register-links a {
+      color: #2f3e46;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      margin: 0 8px;
+    }
+
+    .register-links a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <img src="{% static 'users/images/Logo.png' %}" alt="PathInsight Logo">
+    <h2>Welcome to PathInsight</h2>
+    <form method="post">
+      {% csrf_token %}
+      <input type="text" name="username" placeholder="Username" required>
+      <input type="password" name="password" placeholder="Password" required>
+      <button type="submit">Login</button>
+    </form>
+    <div class="register-links">
+      <a href="{% url 'users:register_jobseeker' %}">Register as Job Seeker</a> |
+      <a href="{% url 'users:register_employer' %}">Register as Employer</a>
+    </div>
+  </div>
+</body>
+</html>
+
+

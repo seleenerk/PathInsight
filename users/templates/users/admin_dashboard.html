@@ -1,0 +1,204 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f6f8;
+    }
+
+    .sidebar {
+      width: 220px;
+      background-color: #2f3e46;
+      height: 100vh;
+      position: fixed;
+      padding-top: 30px;
+      color: white;
+    }
+
+    .sidebar h2 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 12px 20px;
+      text-decoration: none;
+      color: white;
+      transition: background 0.3s;
+    }
+
+    .sidebar a:hover {
+      background-color: #354f52;
+    }
+
+    .main {
+      margin-left: 220px;
+      padding: 30px;
+    }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section h3 {
+      margin-bottom: 20px;
+      color: #2f3e46;
+    }
+
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .card strong {
+      color: #354f52;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .stats-grid {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+    }
+
+    .stats-grid .card {
+      flex: 1;
+      text-align: center;
+    }
+
+    .application-block {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #ccc;
+    }
+
+    button {
+      background-color: #c0392b;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #e74c3c;
+    }
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h2>Admin Panel</h2>
+  <a href="{% url 'users:admin_dashboard' %}">Dashboard</a>
+  <a href="{% url 'users:logout' %}">Log Out</a>
+</div>
+
+<div class="main">
+  <h1>Welcome, Admin!</h1>
+
+  <!-- İstatistik Kutuları -->
+  <div class="stats-grid">
+    <div class="card"><strong>Total Job Seekers:</strong><br> {{ total_seekers }}</div>
+    <div class="card"><strong>Total Employers:</strong><br> {{ total_employers }}</div>
+    <div class="card"><strong>Total Job Postings:</strong><br> {{ total_jobs }}</div>
+    <div class="card"><strong>Total Applications:</strong><br> {{ total_applications }}</div>
+  </div>
+
+  <!-- Job Seekers -->
+  <div class="section">
+    <h3>Job Seekers</h3>
+    <div class="card-grid">
+      {% for seeker in jobseekers %}
+        <div class="card">
+          <strong>Name:</strong> {{ seeker.full_name }}<br>
+          <strong>Email:</strong> {{ seeker.user.email }}
+          <form method="post" action="{% url 'users:delete_jobseeker' seeker.pk %}">
+            {% csrf_token %}
+            <button type="submit">Delete</button>
+          </form>
+        </div>
+      {% empty %}
+        <p>No job seekers found.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Employers -->
+  <div class="section">
+    <h3>Employers</h3>
+    <div class="card-grid">
+      {% for employer in employers %}
+        <div class="card">
+          <strong>Company:</strong> {{ employer.company_name }}<br>
+          <strong>Managed by:</strong> {{ employer.user.get_full_name }} ({{ employer.user.username }})<br>
+          <strong>Email:</strong> {{ employer.user.email }}
+          <form method="post" action="{% url 'users:delete_employer' employer.pk %}">
+            {% csrf_token %}
+            <button type="submit">Delete</button>
+          </form>
+        </div>
+      {% empty %}
+        <p>No employers found.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Job Postings -->
+  <div class="section">
+    <h3>Job Postings</h3>
+    <div class="card-grid">
+      {% for job in job_postings %}
+        <div class="card">
+          <strong>Title:</strong> {{ job.title }}<br>
+          <strong>Company:</strong> {{ job.employer.company_name }}<br>
+          <strong>Posted At:</strong> {{ job.created_at|date:"F d, Y H:i" }}
+          <form method="post" action="{% url 'users:delete_job_posting' job.pk %}">
+            {% csrf_token %}
+            <button type="submit">Delete</button>
+          </form>
+
+          {% with applications=job.applications.all %}
+            {% if applications %}
+              <div class="application-block">
+                <strong>Applications:</strong><br>
+                {% for app in applications %}
+                  - <strong>{{ app.jobseeker.user.get_full_name }}</strong> ({{ app.jobseeker.user.email }})<br>
+                  Applied At: {{ app.application_date|date:"M d, Y H:i" }}<br>
+                  {% if app.jobseeker.cv_file_path %}
+                    <a href="{{ app.jobseeker.cv_file_path.url }}" target="_blank">View CV</a>
+                  {% else %}
+                    No CV uploaded
+                  {% endif %}
+                  <br><br>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p style="color: gray;">No applications yet.</p>
+            {% endif %}
+          {% endwith %}
+        </div>
+      {% empty %}
+        <p>No job postings found.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

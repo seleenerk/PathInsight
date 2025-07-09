@@ -1,0 +1,703 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Job Seeker Dashboard - PathInsight</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f6f8;
+    }
+
+    .sidebar {
+      width: 220px;
+      background-color: #2f3e46;
+      height: 100vh;
+      position: fixed;
+      padding-top: 30px;
+      color: white;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: white;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 12px 20px;
+      text-decoration: none;
+      color: white;
+      transition: background 0.3s;
+    }
+
+    .sidebar a:hover {
+      background-color: #354f52;
+    }
+
+    .sidebar a.active {
+      background-color: #3d4d40;
+      font-weight: bold;
+    }
+
+    .content {
+      margin-left: 220px;
+      padding: 30px;
+    }
+
+    .section-wrapper {
+      display: none;
+    }
+
+    .section-wrapper.active {
+      display: block;
+    }
+
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    button, .btn {
+      background-color: #a1a695;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+
+    button:hover, .btn:hover {
+      background-color: #7c8373;
+    }
+
+    h2, h3 {
+      color: #2f3e46;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    .profile-pic {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 0px;
+      margin-bottom: 15px;
+      border: 2px solid #ccc;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .progress-bar {
+      width: 100%;
+      background-color: #eee;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      background-color: #376e6f;
+      color: white;
+      text-align: center;
+      padding: 5px 0;
+    }
+
+    .success-msg {
+      background-color: #e8f4fd;
+      color: #376e6f;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+
+    .low-match-msg {
+      color: #4c7a74;
+      font-weight: bold;
+    }
+
+    .not-matched-msg {
+      color: #7da99d;
+      font-style: italic;
+    }
+
+    #logout-form {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h2>Job Seeker</h2>
+  <a href="#" data-section="dashboard-wrapper">Dashboard</a>
+  <a href="#" data-section="profile-wrapper">Profile</a>
+  <a href="#" data-section="cv-wrapper">CV Management</a>
+  <a href="#" data-section="survey-wrapper">Fill Survey</a>
+  <a href="#" data-section="matches-wrapper">View Matches</a>
+  <a href="#" data-section="job_listings-wrapper">Job Listings</a>
+  <a href="#" onclick="document.getElementById('logout-form').submit(); return false;">Logout</a>
+
+  <form id="logout-form" method="post" action="{% url 'users:logout' %}">
+    {% csrf_token %}
+  </form>
+</div>
+
+<div class="content">
+  {% if messages %}
+    <div id="message-box" style="
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      padding: 12px 20px;
+      margin-bottom: 20px;
+      border-radius: 6px;
+      transition: opacity 0.5s ease;
+    ">
+      {% for message in messages %}
+        <p style="margin: 0; font-weight: bold;">{{ message }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+
+<!-- Dashboard Section -->
+<div class="section-wrapper active" id="dashboard-wrapper">
+  <div class="card section" style="max-width: 1000px; margin: auto;">
+
+    <!-- Hoş geldin mesajı -->
+    <h2>Welcome, {{ request.user.username }}!</h2>
+    <p style="margin-top: 10px;">
+      To get personalized job recommendations, please upload your CV and complete the survey.
+      Once you're done, click the button below to see your matches!
+    </p>
+
+    {% if cv_uploaded and survey_completed %}
+      <form method="post" action="/users/start-matching/" style="margin-top:20px;">
+        {% csrf_token %}
+        <button type="submit" class="btn">Start Matching</button>
+      </form>
+    {% else %}
+      <button class="btn" disabled style="margin-top:20px; opacity: 0.5; cursor: not-allowed;">
+        Start Matching (CV and survey required)
+      </button>
+    {% endif %}
+
+    <!-- İç kartlar gridi -->
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px; margin-top: 40px;">
+
+      <!-- CV Summary -->
+      <div class="card" style="box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        <h3>CV Analysis Summary</h3>
+        {% if analysis %}
+          <p><strong>Skills:</strong> {{ analysis.skills }}</p>
+          <p><strong>Languages:</strong> {{ analysis.languages }}</p>
+          <p><strong>Education:</strong> {{ analysis.education }}</p>
+          <p><strong>Last Updated:</strong> {{ analysis.submitted_at|date:"F d, Y" }}</p>
+        {% else %}
+          <p>No CV analysis available. Please upload your CV.</p>
+        {% endif %}
+      </div>
+
+      <!-- Survey Progress -->
+      <div class="card" style="box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        <h3>Survey Progress</h3>
+        {% if survey %}
+          <p>{{ answered }} of 15 questions answered</p>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ progress_percent }}%;">
+              {{ progress_percent }}%
+            </div>
+          </div>
+          {% if progress_percent == 100 %}
+            <p style="margin-top: 10px;">You completed the survey!</p>
+          {% endif %}
+        {% else %}
+          <p>You haven't started the survey yet.</p>
+        {% endif %}
+      </div>
+
+      <!-- Recent Applications -->
+      <div class="card" style="box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        <h3>Recent Applications</h3>
+        {% if recent_applications %}
+          <ul>
+            {% for app in recent_applications %}
+              <li>{{ app.job.title }} – {{ app.application_date|date:"M d, Y" }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>You haven't applied to any jobs yet.</p>
+        {% endif %}
+      </div>
+
+      <!-- Career Tip -->
+      <div class="card" style="box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        <h3>Career Tip</h3>
+        <blockquote style="font-style: italic; color: #555;">"{{ tip_of_the_day }}"</blockquote>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Profile Section -->
+<div id="profile-wrapper" class="section-wrapper">
+
+  <!-- Görüntüleme Modu -->
+  <div id="profile-view" class="card section" style="max-width: 700px; margin: auto;">
+    <h2 style="text-align: center;">Profile</h2>
+    {% if profile.profile_picture %}
+      <img src="{{ profile.profile_picture.url }}" alt="Profile Picture" class="profile-pic">
+    {% else %}
+      <img src="{% static 'users/images/default-avatar.png' %}" alt="Default Profile Picture" class="profile-pic">
+    {% endif %}
+
+    <p><strong>Full Name:</strong> {{ profile.full_name }}</p>
+    <p><strong>Phone:</strong> {{ profile.phone }}</p>
+    <p><strong>Email:</strong> {{ user.email }}</p>
+    <p><strong>Skills:</strong> {{ profile.skills|default:"None" }}</p>
+    <p><strong>Education:</strong> {{ profile.education }}</p>
+    <p><strong>Work Experience:</strong> {{ profile.work_experience }}</p>
+    <p><strong>LinkedIn:</strong> <a href="{{ profile.linkedin }}" target="_blank">{{ profile.linkedin }}</a></p>
+
+    <div style="text-align: center; margin-top: 15px;">
+      <button onclick="toggleProfileEdit(true)" class="btn">Edit Profile</button>
+    </div>
+  </div>
+
+  <!-- Düzenleme Modu -->
+  <div id="profile-edit" class="card section" style="display: none; max-width: 700px; margin: auto;">
+    <h2 style="text-align: center;">Edit Profile</h2>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <label>Full Name:</label>
+      <input type="text" name="full_name" value="{{ profile.full_name }}" required>
+
+      <label>Phone:</label>
+      <input type="text" name="phone" value="{{ profile.phone }}" required>
+
+      <label>Email:</label>
+      <input type="email" name="email" value="{{ user.email }}">
+
+      <label>Skills:</label>
+      <input type="text" name="skills" value="{{ profile.skills }}">
+
+      <label>Education:</label>
+      <textarea name="education">{{ profile.education }}</textarea>
+
+      <label>Work Experience:</label>
+      <textarea name="work_experience">{{ profile.work_experience }}</textarea>
+
+      <label>LinkedIn URL:</label>
+      <input type="text" name="linkedin" value="{{ profile.linkedin }}">
+
+      <label>Upload Profile Picture:</label>
+      <input type="file" name="profile_picture">
+
+      <div style="text-align: center; margin-top: 15px;">
+        <button type="submit" class="btn">Save</button>
+        <button type="button" onclick="toggleProfileEdit(false)" class="btn" style="background-color: #999;">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- CV Management -->
+<div class="section-wrapper" id="cv-wrapper">
+  <div id="cv-management" class="card section" style="max-width: 800px; margin: auto;">
+    <h2>CV Management</h2>
+
+    {% if analysis %}
+      <p><strong>CV Uploaded & Analyzed!</strong></p>
+      <ul style="padding-left: 20px;">
+        <li><strong>Email:</strong> {{ analysis.email }}</li>
+
+        <li><strong>Skills:</strong>
+          <ul style="margin-top: 5px; padding-left: 20px;">
+            {% for skill in skills_list %}
+              <li>{{ skill }}</li>
+            {% endfor %}
+          </ul>
+        </li>
+
+        <li><strong>Education:</strong> {{ analysis.education }}</li>
+        <li><strong>Certifications:</strong>
+          <ul style="margin-top: 5px; padding-left: 20px;">
+            {% for cert in certifications_list %}
+              <li>{{ cert }}</li>
+            {% empty %}
+              <li>No certifications found.</li>
+            {% endfor %}
+          </ul>
+        </li>
+
+        <li><strong>Languages:</strong> {{ analysis.languages }}</li>
+
+        <li><strong>Experience:</strong>
+          <ul style="margin-top: 5px; padding-left: 20px;">
+            {% for exp in experience_list %}
+              <li>{{ exp }}</li>
+            {% empty %}
+              <li>No experience found.</li>
+            {% endfor %}
+          </ul>
+        </li>
+      </ul>
+    {% else %}
+      <p>No CV uploaded yet.</p>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" style="margin-top: 20px;">
+      {% csrf_token %}
+      <label for="cv_file_path"><strong>Upload your CV (PDF only):</strong></label>
+      <input type="file" name="cv_file_path" accept=".pdf" required>
+      <div style="margin-top: 15px; text-align: center;">
+        <button type="submit" class="btn">Upload & Analyze CV</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Survey Section -->
+<div class="section-wrapper" style="display: flex; justify-content: center;" id="survey-wrapper">
+  <div id="survey" class="card section" style="max-width: 800px; width: 100%; margin: 40px auto;">
+    <h2 style="text-align: center;">Fill Survey</h2>
+    <form method="post">
+      {% csrf_token %}
+
+      <!-- 1 -->
+      <p><strong>1. I enjoy working in a team:</strong></p>
+      <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+        {% for i in "12345" %}
+          <label style="display: flex; flex-direction: column; align-items: center;">
+            {{ i }}
+            <input type="radio" name="q1" value="{{ i }}" {% if survey.q1_teamwork == i|add:"0" %}checked{% endif %}>
+          </label>
+        {% endfor %}
+      </div>
+
+      <!-- 2 -->
+      <p><strong>2. I like taking on challenging tasks:</strong></p>
+      <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+        {% for i in "12345" %}
+          <label style="display: flex; flex-direction: column; align-items: center;">
+            {{ i }}
+            <input type="radio" name="q2" value="{{ i }}" {% if survey.q2_challenging_tasks == i|add:"0" %}checked{% endif %}>
+          </label>
+        {% endfor %}
+      </div>
+
+      <!-- 3 -->
+      <p><strong>3. I prefer to take the lead in decision-making processes:</strong></p>
+      <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+        {% for i in "12345" %}
+          <label style="display: flex; flex-direction: column; align-items: center;">
+            {{ i }}
+            <input type="radio" name="q3" value="{{ i }}" {% if survey.q3_leadership == i|add:"0" %}checked{% endif %}>
+          </label>
+        {% endfor %}
+      </div>
+
+      <!-- 4 -->
+      <p><strong>4. Uncertainty makes me uncomfortable:</strong></p>
+      <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+        {% for i in "12345" %}
+          <label style="display: flex; flex-direction: column; align-items: center;">
+            {{ i }}
+            <input type="radio" name="q4" value="{{ i }}" {% if survey.q4_uncertainty == i|add:"0" %}checked{% endif %}>
+          </label>
+        {% endfor %}
+      </div>
+
+      <!-- 5 -->
+      <p><strong>5. I would like to stay in the same job for a long time:</strong></p>
+      <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+        {% for i in "12345" %}
+          <label style="display: flex; flex-direction: column; align-items: center;">
+            {{ i }}
+            <input type="radio" name="q5" value="{{ i }}" {% if survey.q5_stability == i|add:"0" %}checked{% endif %}>
+          </label>
+        {% endfor %}
+      </div>
+
+      <!-- 6 -->
+      <p><strong>6. I am interested in new technologies:</strong></p>
+      <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+        {% for i in "12345" %}
+          <label style="display: flex; flex-direction: column; align-items: center;">
+            {{ i }}
+            <input type="radio" name="q6" value="{{ i }}" {% if survey.q6_technology_interest == i|add:"0" %}checked{% endif %}>
+          </label>
+        {% endfor %}
+      </div>
+
+      <!-- 7 -->
+      <p><strong>7. I find problem-solving enjoyable:</strong></p>
+      <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+        {% for i in "12345" %}
+          <label style="display: flex; flex-direction: column; align-items: center;">
+            {{ i }}
+            <input type="radio" name="q7" value="{{ i }}" {% if survey.q7_problem_solving == i|add:"0" %}checked{% endif %}>
+          </label>
+        {% endfor %}
+      </div>
+
+      <!-- 8 -->
+      <p><strong>8. I enjoy tasks that require creative thinking:</strong></p>
+      <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+        {% for i in "12345" %}
+          <label style="display: flex; flex-direction: column; align-items: center;">
+            {{ i }}
+            <input type="radio" name="q8" value="{{ i }}" {% if survey.q8_creativity == i|add:"0" %}checked{% endif %}>
+          </label>
+        {% endfor %}
+      </div>
+
+      <!-- 9 -->
+      <p><strong>9. I enjoy communicating with people:</strong></p>
+      <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+        {% for i in "12345" %}
+          <label style="display: flex; flex-direction: column; align-items: center;">
+            {{ i }}
+            <input type="radio" name="q9" value="{{ i }}" {% if survey.q9_communication == i|add:"0" %}checked{% endif %}>
+          </label>
+        {% endfor %}
+      </div>
+
+      <!-- 10 -->
+      <p><strong>10. I pay attention to details:</strong></p>
+      <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+        {% for i in "12345" %}
+          <label style="display: flex; flex-direction: column; align-items: center;">
+            {{ i }}
+            <input type="radio" name="q10" value="{{ i }}" {% if survey.q10_detail_orientation == i|add:"0" %}checked{% endif %}>
+          </label>
+        {% endfor %}
+      </div>
+
+      <!-- 11 -->
+      <p><strong>11. I want to advance quickly in my career:</strong></p>
+      <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+        {% for i in "12345" %}
+          <label style="display: flex; flex-direction: column; align-items: center;">
+            {{ i }}
+            <input type="radio" name="q11" value="{{ i }}" {% if survey.q11_career_growth == i|add:"0" %}checked{% endif %}>
+          </label>
+        {% endfor %}
+      </div>
+
+      <!-- 12 -->
+      <p><strong>12. Being appreciated at work is important to me:</strong></p>
+      <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+        {% for i in "12345" %}
+          <label style="display: flex; flex-direction: column; align-items: center;">
+            {{ i }}
+            <input type="radio" name="q12" value="{{ i }}" {% if survey.q12_recognition == i|add:"0" %}checked{% endif %}>
+          </label>
+        {% endfor %}
+      </div>
+
+      <!-- 13 -->
+      <p><strong>13. I have goals such as starting my own business:</strong></p>
+      <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+        {% for i in "12345" %}
+          <label style="display: flex; flex-direction: column; align-items: center;">
+            {{ i }}
+            <input type="radio" name="q13" value="{{ i }}" {% if survey.q13_entrepreneurship == i|add:"0" %}checked{% endif %}>
+          </label>
+        {% endfor %}
+      </div>
+
+      <!-- 14 -->
+      <p><strong>14. I enjoy learning new things:</strong></p>
+      <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+        {% for i in "12345" %}
+          <label style="display: flex; flex-direction: column; align-items: center;">
+            {{ i }}
+            <input type="radio" name="q14" value="{{ i }}" {% if survey.q14_learning == i|add:"0" %}checked{% endif %}>
+          </label>
+        {% endfor %}
+      </div>
+
+      <!-- 15 -->
+      <p><strong>15. I want to work in a job where I can make a difference:</strong></p>
+      <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+        {% for i in "12345" %}
+          <label style="display: flex; flex-direction: column; align-items: center;">
+            {{ i }}
+            <input type="radio" name="q15" value="{{ i }}" {% if survey.q15_impact == i|add:"0" %}checked{% endif %}>
+          </label>
+        {% endfor %}
+      </div>
+
+      <!-- Submit -->
+      <div style="text-align:center; margin-top: 30px;">
+        <button type="submit" class="btn">Submit Survey</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Matches Section -->
+<div class="section-wrapper" id="matches-wrapper">
+  <div id="matches" class="card section" style="max-width: 900px; margin: auto;">
+    <h2>Your Job Matches</h2>
+
+    {% if matched_jobs %}
+      {% for match in matched_jobs %}
+        <div class="card" style="margin-bottom: 20px;">
+          <h3>{{ match.job.title }}</h3>
+          <p><strong>Match Score:</strong> {{ match.match_score }}%</p>
+          <p><strong>Reason:</strong> {{ match.explanation|default:"No explanation available." }}</p>
+
+          {% if match.can_apply %}
+            {% if match.job.id in applied_job_ids %}
+              <p style="color: green; font-weight: bold;">You have already applied to this job.</p>
+            {% else %}
+              <form method="post" action="{% url 'users:apply_job' match.job.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn">Apply</button>
+              </form>
+            {% endif %}
+          {% else %}
+            <p class="low-match-msg">A minimum match score of 50% is required to apply for this position.</p>
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <p>No matches found yet. Please upload your CV and complete the survey.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Job Listings Section -->
+<div class="section-wrapper" id="job_listings-wrapper" style="display: none;">
+  <div id="job_listings" class="card section" style="max-width: 900px; margin: auto;">
+    <h2>Active Job Listings</h2>
+
+    {% for job in all_jobs %}
+      <div class="card" style="margin-bottom: 20px;">
+        <h3>{{ job.title }}</h3>
+
+        <p><strong>Company Name:</strong> {{ job.employer.company_name }}</p>
+        <p><strong>Industry:</strong> {{ job.employer.industry }}</p>
+        <p><strong>Founded:</strong> {{ job.employer.founded_year }}</p>
+        <p><strong>Location:</strong> {{ job.employer.location }}</p>
+        <p><strong>Website:</strong> <a href="{{ job.employer.website }}" target="_blank">{{ job.employer.website }}</a></p>
+        <p><strong>Description:</strong> {{ job.description }}</p>
+        <p><strong>Required Skills:</strong> {{ job.required_skills }}</p>
+        <p><strong>Preferred Traits:</strong> {{ job.preferred_traits }}</p>
+
+        {% if job.id in applied_job_ids %}
+          <p style="color: green; font-weight: bold;">You have already applied.</p>
+
+        {% else %}
+          {% with matched=False %}
+            {% for match in matched_jobs_raw %}
+              {% if match.job.id == job.id %}
+                {% if match.match_score >= 50 %}
+                  <form method="post" action="{% url 'users:apply_job' job.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn">Apply</button>
+                  </form>
+                {% else %}
+                  <p style="color: darkred; font-weight: bold;">A minimum match score of 50% is required to apply for this position.</p>
+                {% endif %}
+                {% with matched=True %}{% endwith %}
+              {% endif %}
+            {% endfor %}
+
+            {% if not matched %}
+              <p style="color: gray;">A minimum match score of 50% is required to apply for this position.</p>
+            {% endif %}
+          {% endwith %}
+        {% endif %}
+
+      </div>
+    {% empty %}
+      <p>No active job listings available.</p>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+
+    function showSection(sectionId) {
+      document.querySelectorAll('.section-wrapper').forEach(section => {
+        section.style.display = 'none';
+      });
+      const selected = document.getElementById(sectionId);
+      if (selected) {
+        selected.style.display = 'flex';
+        localStorage.setItem("activeSection", sectionId);
+      }
+
+      if (sectionId === "profile-wrapper") {
+        toggleProfileEdit(false);
+      }
+
+    }
+
+    window.toggleProfileEdit = function (isEditing) {
+      const view = document.getElementById("profile-view");
+      const edit = document.getElementById("profile-edit");
+      if (view && edit) {
+        view.style.display = isEditing ? "none" : "block";
+        edit.style.display = isEditing ? "block" : "none";
+      }
+    };
+
+    const savedSection = localStorage.getItem("activeSection") || "dashboard-wrapper";
+    showSection(savedSection);
+
+    document.querySelectorAll('.sidebar a[data-section]').forEach(link => {
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+        this.classList.add('active');
+        showSection(this.getAttribute('data-section'));
+      });
+    });
+
+  
+    const msg = document.getElementById("message-box");
+    if (msg) {
+      setTimeout(() => {
+        msg.style.transition = "opacity 0.5s ease";
+        msg.style.opacity = "0";
+        setTimeout(() => {
+          if (msg.parentNode) {
+            msg.remove();
+          }
+        }, 500);
+      }, 3000);
+    }
+
+
+
+
+  });
+</script>
+
+</body>
+</html>
