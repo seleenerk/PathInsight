@@ -1,20 +1,20 @@
 # PathInsight
 
 **PathInsight** is a Django-based CV analysis and job matching platform that bridges the gap between job seekers and employers.  
-📄 It uses Natural Language Processing (NLP) techniques to extract key information such as email, phone number, education, skills, work experience, certifications, and languages from PDF resumes.  
-🧠 This data is then matched with job postings and personality traits to recommend the most relevant positions to each user.
+It uses Natural Language Processing (NLP) techniques to extract key information such as email, phone number, education, skills, work experience, certifications, and languages from PDF resumes.  
+This data is then matched with job postings and personality traits to recommend the most relevant positions to each user.
 
 ---
 
 ## 🚀 Features
 
-- 📄 Automatic PDF resume parsing using PyMuPDF + regex-based NLP
-- 🧠 Extraction of skills, education, experience, certifications, and languages
-- 🧪 15-question Likert-scale personality assessment
-- 🤖 Job matching based on Fuzzy Matching and Trait Scoring
-- 👤 Separate dashboards for job seekers and employers
-- 🛡️ Django-based authentication and admin panel
-- 📊 Admin dashboard with job/user statistics and management tools
+- Automatic PDF resume parsing using PyMuPDF + regex-based NLP
+- Extraction of skills, education, experience, certifications, and languages
+- 15-question Likert-scale personality assessment
+- Job matching based on Fuzzy Matching and Trait Scoring
+- Separate dashboards for job seekers and employers
+- Django-based authentication and admin panel
+- Admin dashboard with job/user statistics and management tools
 
 ---
 
